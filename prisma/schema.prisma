@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id         String      @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  company    String?
+  createdAt  DateTime    @default(now())
+  checklists Checklist[]
+}
+
+model Checklist {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  currency      String    @default("$")
+  // DRAFT | SENT | RESPONDED | FINALIZED
+  status        String    @default("DRAFT")
+  shareToken    String    @unique
+  clientMessage String?
+  respondedAt   DateTime?
+  finalizedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  clientId String
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  services Service[]
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  price       Float   @default(0)
+  position    Int     @default(0)
+  // ADMIN = ajouté par le prestataire, CLIENT = ajouté par le client
+  origin      String  @default("ADMIN")
+  // KEPT = gardé, REMOVED = retiré par le client
+  decision    String  @default("KEPT")
+  // Contre-proposition de prix faite par le client
+  proposedPrice Float?
+  // Prix final validé par le prestataire (prioritaire pour le devis)
+  finalPrice    Float?
+  createdAt   DateTime @default(now())
+
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+}
