@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button, Card, CardHeader, CardTitle, CardBody, Input } from "@/components/ui";
 
 export default function ShareBox({
   shareUrl,
@@ -32,25 +33,24 @@ export default function ShareBox({
     : `https://wa.me/?text=${waText}`;
 
   return (
-    <div className="card p-5">
-      <h2 className="mb-1 font-semibold">Lien à partager au client</h2>
-      <p className="mb-3 text-sm text-gray-500">
-        Le client ouvre ce lien, sélectionne ses services, propose un prix et confirme.
-      </p>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <input readOnly value={shareUrl} className="input font-mono text-xs" />
-        <button onClick={copy} type="button" className="btn-secondary shrink-0">
+    <Card>
+      <CardHeader>
+        <CardTitle>Lien à partager au client</CardTitle>
+        <p className="mt-1 text-sm text-ink-muted">
+          Le client ouvre ce lien, sélectionne ses services, propose un prix et confirme.
+        </p>
+      </CardHeader>
+      <CardBody className="flex flex-col gap-2 sm:flex-row">
+        <Input readOnly value={shareUrl} className="font-mono text-xs" />
+        <Button onClick={copy} type="button" variant="secondary" className="shrink-0">
           {copied ? "Copié ✓" : "Copier"}
-        </button>
-        <a
-          href={waHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn shrink-0 bg-green-600 text-white hover:bg-green-700"
-        >
-          Envoyer via WhatsApp
+        </Button>
+        <a href={waHref} target="_blank" rel="noopener noreferrer" className="shrink-0">
+          <Button type="button" variant="success" className="w-full">
+            Envoyer via WhatsApp
+          </Button>
         </a>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }
