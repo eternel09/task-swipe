@@ -1,0 +1,27 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # URL publique de l'app (inlinée au build pour les liens partagés aux clients).
+        # Mets ici l'URL réelle en production, ex: https://checklist.mondomaine.com
+        NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-http://localhost:3000}"
+    image: checklist-devis
+    container_name: checklist-devis
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Base SQLite persistée dans le volume monté ci-dessous
+      DATABASE_URL: "file:/app/data/prod.db"
+      # Mot de passe d'accès au dashboard (À CHANGER)
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-change-moi}"
+      # Secret de signature du cookie de session (À CHANGER, chaîne aléatoire longue)
+      AUTH_SECRET: "${AUTH_SECRET:-remplace-par-une-longue-chaine-aleatoire-de-32-caracteres}"
+      # Doit correspondre à l'ARG de build ci-dessus
+      NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-http://localhost:3000}"
+    volumes:
+      - checklist-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  checklist-data:
