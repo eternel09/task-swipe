@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { statusMeta, formatDate, formatMoney, computeTotal } from "@/lib/format";
+import { formatDate, formatMoney, computeTotal } from "@/lib/format";
+import { Card, CardBody, StatusBadge } from "@/components/ui";
 import ShareBox from "./ShareBox";
 import ServicesEditor from "./ServicesEditor";
 import FinalizePanel from "./FinalizePanel";
@@ -21,55 +22,60 @@ export default async function ChecklistDetailPage({
 
   if (!checklist) notFound();
 
-  const meta = statusMeta(checklist.status);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
   const shareUrl = `${appUrl}/c/${checklist.shareToken}`;
   const total = computeTotal(checklist.services);
   const beforeResponse = checklist.status === "DRAFT" || checklist.status === "SENT";
 
+  const contact = [checklist.client.email, checklist.client.phone].filter(Boolean).join(" · ");
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link href="/dashboard" className="text-sm text-brand-600 hover:underline">
-            ← Toutes les checklists
-          </Link>
-          <div className="mt-2 flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{checklist.title}</h1>
-            <span className={`badge ${meta.className}`}>{meta.label}</span>
-          </div>
-          <p className="mt-1 text-sm text-gray-500">
-            {checklist.client.company || checklist.client.name}
-            {checklist.client.email ? ` · ${checklist.client.email}` : ""}
-            {checklist.client.phone ? ` · ${checklist.client.phone}` : ""}
-          </p>
-          {checklist.respondedAt && (
-            <p className="mt-0.5 text-xs text-gray-400">
-              Réponse reçue le {formatDate(checklist.respondedAt)}
+    <div className="animate-fade-in space-y-6">
+      <Link href="/dashboard" className="text-sm text-brand-600 hover:underline">
+        ← Toutes les checklists
+      </Link>
+
+      {/* En-tête */}
+      <Card>
+        <CardBody className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold text-ink">{checklist.title}</h1>
+              <StatusBadge status={checklist.status} />
+            </div>
+            <p className="mt-2 text-sm text-ink-muted">
+              <span className="font-medium text-ink">
+                {checklist.client.company || checklist.client.name}
+              </span>
+              {checklist.client.company && ` · ${checklist.client.name}`}
+              {contact && ` · ${contact}`}
             </p>
-          )}
-        </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-brand-700">
-            {formatMoney(total, checklist.currency)}
+            {checklist.respondedAt && (
+              <p className="mt-1 text-xs text-ink-subtle">
+                Réponse reçue le {formatDate(checklist.respondedAt)}
+              </p>
+            )}
           </div>
-          <div className="text-xs text-gray-400">total actuel</div>
-        </div>
-      </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-brand-700">
+              {formatMoney(total, checklist.currency)}
+            </div>
+            <div className="text-xs text-ink-subtle">total actuel</div>
+          </div>
+        </CardBody>
+      </Card>
 
       {beforeResponse && (
-        <ShareBox
-          shareUrl={shareUrl}
-          clientPhone={checklist.client.phone}
-          title={checklist.title}
-        />
+        <ShareBox shareUrl={shareUrl} clientPhone={checklist.client.phone} title={checklist.title} />
       )}
 
       {checklist.clientMessage && (
-        <div className="card border-amber-200 bg-amber-50 p-5">
-          <h2 className="mb-1 text-sm font-semibold text-amber-800">Message du client</h2>
-          <p className="whitespace-pre-wrap text-sm text-amber-900">{checklist.clientMessage}</p>
-        </div>
+        <Card className="border-amber-200 bg-amber-50">
+          <CardBody>
+            <h2 className="mb-1 text-sm font-semibold text-amber-800">Message du client</h2>
+            <p className="whitespace-pre-wrap text-sm text-amber-900">{checklist.clientMessage}</p>
+          </CardBody>
+        </Card>
       )}
 
       {beforeResponse ? (

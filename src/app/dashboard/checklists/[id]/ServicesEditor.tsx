@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Button, Card, CardHeader, CardTitle, CardBody, CardFooter, Input, Textarea, Field } from "@/components/ui";
 import { saveServices, markAsSent } from "@/lib/actions";
 
 type ServiceRow = { name: string; description: string; price: string };
@@ -68,7 +69,9 @@ export default function ServicesEditor({
           services: cleaned,
         });
         if (thenSend) await markAsSent(checklistId);
-        setSavedMsg(thenSend ? "Enregistré et marqué comme envoyée ✓" : "Modifications enregistrées ✓");
+        setSavedMsg(
+          thenSend ? "Enregistré et marqué comme envoyée ✓" : "Modifications enregistrées ✓"
+        );
       } catch (err: any) {
         setError(err?.message ?? "Erreur lors de l'enregistrement.");
       }
@@ -76,97 +79,90 @@ export default function ServicesEditor({
   };
 
   return (
-    <div className="card p-5">
-      <h2 className="mb-4 font-semibold">Services proposés</h2>
+    <Card>
+      <CardHeader>
+        <CardTitle>Services proposés</CardTitle>
+      </CardHeader>
+      <CardBody className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Titre" className="sm:col-span-2">
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </Field>
+          <Field label="Devise">
+            <Input value={currency} maxLength={6} onChange={(e) => setCurrency(e.target.value)} />
+          </Field>
+          <Field label="Description" className="sm:col-span-3">
+            <Textarea
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </Field>
+        </div>
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-3">
-        <div className="sm:col-span-2">
-          <label className="label">Titre</label>
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
-        </div>
-        <div>
-          <label className="label">Devise</label>
-          <input
-            className="input"
-            value={currency}
-            maxLength={6}
-            onChange={(e) => setCurrency(e.target.value)}
-          />
-        </div>
-        <div className="sm:col-span-3">
-          <label className="label">Description</label>
-          <textarea
-            className="input"
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        {services.map((s, i) => (
-          <div key={i} className="flex gap-3 rounded-lg border border-gray-200 p-3">
-            <div className="flex-1 space-y-2">
-              <input
-                className="input"
-                value={s.name}
-                onChange={(e) => updateService(i, { name: e.target.value })}
-                placeholder="Nom du service"
-              />
-              <input
-                className="input"
-                value={s.description}
-                onChange={(e) => updateService(i, { description: e.target.value })}
-                placeholder="Description (optionnel)"
-              />
+        <div className="space-y-3">
+          {services.map((s, i) => (
+            <div key={i} className="flex gap-3 rounded-xl border border-gray-200 p-3">
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={s.name}
+                  onChange={(e) => updateService(i, { name: e.target.value })}
+                  placeholder="Nom du service"
+                />
+                <Input
+                  value={s.description}
+                  onChange={(e) => updateService(i, { description: e.target.value })}
+                  placeholder="Description (optionnel)"
+                />
+              </div>
+              <div className="w-32 shrink-0">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={s.price}
+                  onChange={(e) => updateService(i, { price: e.target.value })}
+                  placeholder="0.00"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeRow(i)}
+                  className="mt-2 w-full text-xs text-red-500 hover:underline"
+                >
+                  Retirer
+                </button>
+              </div>
             </div>
-            <div className="w-32">
-              <input
-                className="input"
-                type="number"
-                min="0"
-                step="0.01"
-                value={s.price}
-                onChange={(e) => updateService(i, { price: e.target.value })}
-                placeholder="0.00"
-              />
-              <button
-                type="button"
-                onClick={() => removeRow(i)}
-                className="mt-2 w-full text-xs text-red-500 hover:underline"
-              >
-                Retirer
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div className="mt-3 flex items-center justify-between">
-        <button type="button" onClick={addRow} className="btn-secondary">
-          + Ajouter un service
-        </button>
-        <span className="text-sm text-gray-500">
-          Total : <strong>{total.toFixed(2)} {currency}</strong>
-        </span>
-      </div>
+        <div className="flex items-center justify-between">
+          <Button type="button" variant="secondary" onClick={addRow}>
+            + Ajouter un service
+          </Button>
+          <span className="text-sm text-ink-muted">
+            Total :{" "}
+            <strong className="text-ink">
+              {total.toFixed(2)} {currency}
+            </strong>
+          </span>
+        </div>
 
-      {error && <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
-      {savedMsg && (
-        <p className="mt-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">{savedMsg}</p>
-      )}
-
-      <div className="mt-4 flex flex-wrap justify-end gap-3">
-        <button type="button" onClick={() => save(false)} className="btn-secondary" disabled={pending}>
-          {pending ? "…" : "Enregistrer"}
-        </button>
-        {status === "DRAFT" && (
-          <button type="button" onClick={() => save(true)} className="btn-primary" disabled={pending}>
-            {pending ? "…" : "Enregistrer & marquer envoyée"}
-          </button>
+        {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
+        {savedMsg && (
+          <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">{savedMsg}</p>
         )}
-      </div>
-    </div>
+      </CardBody>
+      <CardFooter>
+        <Button type="button" variant="secondary" onClick={() => save(false)} loading={pending}>
+          Enregistrer
+        </Button>
+        {status === "DRAFT" && (
+          <Button type="button" onClick={() => save(true)} loading={pending}>
+            Enregistrer &amp; marquer envoyée
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
   );
 }

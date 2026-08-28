@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { Button, Card, CardHeader, CardTitle, CardBody, CardFooter, Input, Badge } from "@/components/ui";
 import { applyFinalization, reopenChecklist } from "@/lib/actions";
 
 type Svc = {
@@ -107,126 +108,121 @@ export default function FinalizePanel({
     ? `https://wa.me/${clientPhone.replace(/[^0-9]/g, "")}?text=${waText}`
     : `https://wa.me/?text=${waText}`;
 
+  const finalized = status === "FINALIZED";
+
   return (
-    <div className="card p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-semibold">Réponses du client & finalisation</h2>
-        {status === "FINALIZED" && (
-          <span className="badge bg-green-100 text-green-700">Finalisé</span>
+    <Card>
+      <CardHeader className="flex items-center justify-between">
+        <CardTitle>Réponses du client &amp; finalisation</CardTitle>
+        {finalized && <Badge tone="green">Finalisé</Badge>}
+      </CardHeader>
+      <CardBody>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-xs uppercase text-ink-subtle">
+                <th className="py-2 pr-2">Inclure</th>
+                <th className="py-2 pr-2">Service</th>
+                <th className="py-2 pr-2 text-right">Prix initial</th>
+                <th className="py-2 pr-2 text-right">Prix client</th>
+                <th className="py-2 pr-2 text-right">Prix final</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => {
+                const s = byId.get(it.id)!;
+                const clientReduced =
+                  s.decision === "REMOVED"
+                    ? "retiré"
+                    : s.proposedPrice != null && s.proposedPrice !== s.price
+                      ? money(s.proposedPrice, currency)
+                      : "—";
+                return (
+                  <tr key={it.id} className="border-b border-gray-100">
+                    <td className="py-3 pr-2">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-brand-600"
+                        checked={it.include}
+                        disabled={finalized}
+                        onChange={(e) => setItem(it.id, { include: e.target.checked })}
+                      />
+                    </td>
+                    <td className="py-3 pr-2">
+                      <div className="flex items-center gap-2 font-medium text-ink">
+                        {s.name}
+                        {s.origin === "CLIENT" && <Badge tone="brand">ajout client</Badge>}
+                      </div>
+                      {s.description && <div className="text-xs text-ink-muted">{s.description}</div>}
+                    </td>
+                    <td className="py-3 pr-2 text-right text-ink-muted">
+                      {s.origin === "CLIENT" ? "—" : money(s.price, currency)}
+                    </td>
+                    <td
+                      className={`py-3 pr-2 text-right ${
+                        s.decision === "REMOVED" ? "text-red-500" : "text-ink"
+                      }`}
+                    >
+                      {clientReduced}
+                    </td>
+                    <td className="py-3 pr-2 text-right">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="w-28 text-right"
+                        value={it.finalPriceStr}
+                        disabled={finalized || !it.include}
+                        onChange={(e) => setItem(it.id, { finalPriceStr: e.target.value })}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={4} className="py-3 pr-2 text-right font-semibold text-ink">
+                  TOTAL
+                </td>
+                <td className="py-3 pr-2 text-right text-lg font-bold text-brand-700">
+                  {money(total, currency)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {error && <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
+        {finalized && (
+          <p className="mt-3 text-xs text-ink-subtle">
+            Astuce : télécharge le PDF puis joins-le dans WhatsApp ou par email au client.
+          </p>
         )}
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-400">
-              <th className="py-2 pr-2">Inclure</th>
-              <th className="py-2 pr-2">Service</th>
-              <th className="py-2 pr-2 text-right">Prix initial</th>
-              <th className="py-2 pr-2 text-right">Prix client</th>
-              <th className="py-2 pr-2 text-right">Prix final</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it) => {
-              const s = byId.get(it.id)!;
-              const clientReduced =
-                s.decision === "REMOVED"
-                  ? "retiré"
-                  : s.proposedPrice != null && s.proposedPrice !== s.price
-                    ? money(s.proposedPrice, currency)
-                    : "—";
-              return (
-                <tr key={it.id} className="border-b border-gray-100">
-                  <td className="py-3 pr-2">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-brand-600"
-                      checked={it.include}
-                      disabled={status === "FINALIZED"}
-                      onChange={(e) => setItem(it.id, { include: e.target.checked })}
-                    />
-                  </td>
-                  <td className="py-3 pr-2">
-                    <div className="flex items-center gap-2 font-medium">
-                      {s.name}
-                      {s.origin === "CLIENT" && (
-                        <span className="badge bg-brand-100 text-brand-700">ajout client</span>
-                      )}
-                    </div>
-                    {s.description && (
-                      <div className="text-xs text-gray-500">{s.description}</div>
-                    )}
-                  </td>
-                  <td className="py-3 pr-2 text-right text-gray-500">
-                    {s.origin === "CLIENT" ? "—" : money(s.price, currency)}
-                  </td>
-                  <td
-                    className={`py-3 pr-2 text-right ${
-                      s.decision === "REMOVED" ? "text-red-500" : "text-gray-700"
-                    }`}
-                  >
-                    {clientReduced}
-                  </td>
-                  <td className="py-3 pr-2 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      className="input w-28 text-right"
-                      value={it.finalPriceStr}
-                      disabled={status === "FINALIZED" || !it.include}
-                      onChange={(e) => setItem(it.id, { finalPriceStr: e.target.value })}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={4} className="py-3 pr-2 text-right font-semibold">
-                TOTAL
-              </td>
-              <td className="py-3 pr-2 text-right text-lg font-bold text-brand-700">
-                {money(total, currency)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      {error && <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
-
-      <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
-        {status !== "FINALIZED" ? (
-          <button type="button" onClick={finalize} className="btn-primary" disabled={pending}>
-            {pending ? "…" : "Finaliser le devis"}
-          </button>
+      </CardBody>
+      <CardFooter>
+        {!finalized ? (
+          <Button type="button" onClick={finalize} loading={pending}>
+            Finaliser le devis
+          </Button>
         ) : (
           <>
-            <button type="button" onClick={reopen} className="btn-secondary" disabled={pending}>
+            <Button type="button" variant="secondary" onClick={reopen} loading={pending}>
               Rouvrir
-            </button>
-            <a href={pdfUrl} className="btn-secondary" target="_blank" rel="noopener noreferrer">
-              Télécharger le PDF
+            </Button>
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+              <Button type="button" variant="secondary">
+                Télécharger le PDF
+              </Button>
             </a>
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn bg-green-600 text-white hover:bg-green-700"
-            >
-              Envoyer le devis (WhatsApp)
+            <a href={waHref} target="_blank" rel="noopener noreferrer">
+              <Button type="button" variant="success">
+                Envoyer le devis (WhatsApp)
+              </Button>
             </a>
           </>
         )}
-      </div>
-      {status === "FINALIZED" && (
-        <p className="mt-3 text-xs text-gray-400">
-          Astuce : télécharge le PDF puis joins-le dans WhatsApp ou par email au client.
-        </p>
-      )}
-    </div>
+      </CardFooter>
+    </Card>
   );
 }
