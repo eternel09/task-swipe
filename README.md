@@ -72,7 +72,38 @@ Connecte-toi sur `/login` avec le mot de passe défini dans `ADMIN_PASSWORD`.
 - **Service** — appartient à une checklist. `origin` (`ADMIN`/`CLIENT`), `decision`
   (`KEPT`/`REMOVED`), `proposedPrice` (contre-offre client), `finalPrice` (validé par toi).
 
-## Déploiement
+## Déploiement avec Docker
+
+L'app est packagée avec Docker (multi-stage) + Docker Compose. La base SQLite est persistée
+dans un volume nommé (`checklist-data`).
+
+```bash
+# 1. Configure tes variables (recommandé : fichier .env à côté du docker-compose.yml)
+#    ADMIN_PASSWORD, AUTH_SECRET, NEXT_PUBLIC_APP_URL, (PORT optionnel)
+cp .env.example .env   # puis édite-le
+
+# 2. Build + démarrage
+docker compose up -d --build
+
+# 3. Logs
+docker compose logs -f
+```
+
+L'app est alors disponible sur `http://localhost:3000` (ou le `PORT` défini).
+
+> ℹ️ `NEXT_PUBLIC_APP_URL` est **inlinée au build** (elle sert à construire les liens
+> partagés aux clients). Mets-y ton URL publique réelle **avant** le build, ex.
+> `NEXT_PUBLIC_APP_URL=https://checklist.mondomaine.com docker compose up -d --build`.
+> Le schéma de la base est appliqué automatiquement au démarrage (`prisma db push`).
+
+Arrêt / mise à jour :
+
+```bash
+docker compose down            # arrête (conserve le volume de données)
+docker compose up -d --build   # rebuild après un changement de code
+```
+
+## Déploiement sans Docker
 
 L'app se déploie sur toute plateforme Node (Railway, Render, Fly, VPS…). Pour une base
 persistante en production, bascule `DATABASE_URL` vers Postgres et change `provider` dans
