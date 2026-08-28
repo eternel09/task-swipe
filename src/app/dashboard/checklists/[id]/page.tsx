@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDate, formatMoney, computeTotal } from "@/lib/format";
+import { getBaseUrl } from "@/lib/url";
 import { Card, CardBody, StatusBadge } from "@/components/ui";
 import ShareBox from "./ShareBox";
 import ServicesEditor from "./ServicesEditor";
@@ -22,8 +23,7 @@ export default async function ChecklistDetailPage({
 
   if (!checklist) notFound();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-  const shareUrl = `${appUrl}/c/${checklist.shareToken}`;
+  const shareUrl = `${getBaseUrl()}/c/${checklist.shareToken}`;
   const total = computeTotal(checklist.services);
   const beforeResponse = checklist.status === "DRAFT" || checklist.status === "SENT";
 
