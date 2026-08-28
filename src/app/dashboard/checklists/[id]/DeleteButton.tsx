@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { Button } from "@/components/ui";
 import { deleteChecklist } from "@/lib/actions";
 
 export default function DeleteButton({ checklistId }: { checklistId: string }) {
@@ -19,8 +20,8 @@ export default function DeleteButton({ checklistId }: { checklistId: string }) {
   };
 
   return (
-    <button type="button" onClick={onClick} className="btn-danger" disabled={pending}>
-      {pending ? "…" : "Supprimer"}
-    </button>
+    <Button type="button" variant="danger" onClick={onClick} loading={pending}>
+      Supprimer
+    </Button>
   );
 }
